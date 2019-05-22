@@ -32,9 +32,34 @@ def mousePressed(x, y, button):
 def mouseReleased(x, y, button):
     pass
 
+def switchMenu(m):
+    global MENU, MENUS
+    print(m, len(MENUS))
+    if m > len(MENUS)-1:
+        m = len(MENUS)-1
+    if m < 0:
+        m = 0
+    MENU = m
+    for x in range(len(MENUS)):
+        MENUS[x].NoSelect()
+        if x == m:
+            MENUS[x].Selected()
+
+def createSwitch(x):
+    global switchMenu
+    def switchTo():
+        switchMenu(x)
+
+    return switchTo
+
 def mouseClicked(x, y, button):
     if y < MENUBARHEIGHT:
-        pass
+        X = 0
+        for button in MENUS:
+            if x > X and x < button.length + X:
+                button.Click()
+                FUNCQ.append(button)
+            X = X + button.length + 10
     if y > MENUBARHEIGHT and y < MENUBARHEIGHT + BBARHEIGHT:
         X = 0
         for button in BUTTONS[MENU]:
@@ -48,6 +73,9 @@ def mouseClicked(x, y, button):
         awidth = width
         aheight = y - MENUBARHEIGHT - BBARHEIGHT
 
+        if MENUS[MENU].name == "Remote Control":
+            pass
+
 def mouseDragged(drag, button):
     pass
 
@@ -56,12 +84,31 @@ def mouseMoved(x,y,dx,dy, button):
 
 def preInit():
     global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ
-    MENUS = ["RDP"]
-    MENU = 0
-    BUTTONS = [[Button("Quit", function=Exit), Button("Update", function=udpateMail), Button("Screen Shot", function=RequestScreenShot)]]
     BBARHEIGHT = 50
     MENUBARHEIGHT = 25
+    MENUS = [
+        Button("Remote Control"), 
+        Button("Web"), 
+        Button("File Browser")
+        ]
+    MENU = 0
+    BUTTONS = [
+        [Button("Quit", function=Exit), Button("Update", function=udpateMail), Button("Screen Shot", function=RequestScreenShot)], 
+        [Button("Quit", function=Exit),], 
+        [Button("Quit", function=Exit),],
+        ]
+    
     FUNCQ = []
+    for x,button in enumerate(MENUS):
+        button.buttonHeight = MENUBARHEIGHT - 5
+        button.function = createSwitch(x)
+        button.color = (180, 180, 180)
+    MENUS[0].Selected()
+
+    for bList in BUTTONS:
+        for button in bList:
+            button.buttonHeight = BBARHEIGHT
+
     global MC, server_address, SC
     with open("client_config.txt", "r") as file:
         clist = [x.split(":") for x in file.readlines() if len(x.strip("\n")) > 0]
@@ -147,14 +194,18 @@ def Exit():
     sys.exit()
 
 def draw(surface, dt):
-    print(len(FUNCQ))
-    print(FUNCQ)
     MenuBar = pygame.Surface((width, MENUBARHEIGHT))
     ButtonBar = pygame.Surface((width, BBARHEIGHT))
     TotalHeight = MENUBARHEIGHT + BBARHEIGHT
 
     MenuBar.fill((255,255,255))
     ButtonBar.fill((200,200,200))
+
+    x = 0
+    for button in MENUS:
+        s = button.CreateSurf()
+        MenuBar.blit(s, (x, 0))
+        x = x + button.length + 10
 
 
     x = 0
@@ -163,11 +214,11 @@ def draw(surface, dt):
         ButtonBar.blit(s, (x, 0))
         x = x + button.length + 10
 
-
-    for s in ScreenCaps:
-        s.scale(width, height-TotalHeight)
-        i = s.getPicture()
-        surface.blit(i,(s.Position[0],TotalHeight+s.Position[1]))
+    if MENUS[MENU].name == "Remote Control":
+        for s in ScreenCaps:
+            s.scale(width, height-TotalHeight)
+            i = s.getPicture()
+            surface.blit(i,(s.Position[0],TotalHeight+s.Position[1]))
 
     surface.blit(MenuBar, (0,0))
     surface.blit(ButtonBar, (0, MENUBARHEIGHT))
@@ -176,7 +227,7 @@ def draw(surface, dt):
 
 if __name__ == "__main__":
     preInit()
-    size = width, height = 1200, 800
+    size = width, height = 1200, 800+MENUBARHEIGHT+BBARHEIGHT
     pygame.init()
     pygame.display.set_mode(size, RESIZABLE)
     pygame.display.set_caption("RDP Over SMTP")
