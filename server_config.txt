@@ -1,0 +1,7 @@
+USERNAME:ServiceOverEmail@gmail.com
+PASSWORD:WhatIsLife123!@#
+IMAP_PORT:993
+SMTP_PORT:465
+IMAP_ADDRESS:imap.gmail.com
+SMTP_ADDRESS:smtp.gmail.com
+ALLOWED_MODULES:Reply,RDP,Web,File,Log,Math

@@ -1,0 +1,7 @@
+`RDP.Click
+`RDP.MRM {var["dist"]} 0
+`RDP.Click
+`RDP.MRM {var["dist"]} 0
+`RDP.Click
+`RDP.MRM {var["dist"]} 0
+`RDP.Click

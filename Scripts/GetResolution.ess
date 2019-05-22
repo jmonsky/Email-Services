@@ -1,0 +1,2 @@
+`RDP.GetResolution | Math.IAddS "%% Resolution : " | Reply.Body
+`Reply.SendReply
