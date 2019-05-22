@@ -52,6 +52,16 @@ def createSwitch(x):
 
     return switchTo
 
+def ToggleMacro():
+    global BUTTONS, SC, RECORDING, RCSCRIPT, RCTIME
+    for button in BUTTONS[MENU]:
+        if button.name == "Start Rec":
+            RCSCRIPT = SC.CreateDynamicScript("Recording Script")
+            RCTIME = time()
+        elif button.name == "Stop Rec":
+            pass
+        break
+
 def mouseClicked(x, y, button):
     if y < MENUBARHEIGHT:
         X = 0
@@ -74,7 +84,10 @@ def mouseClicked(x, y, button):
         aheight = y - MENUBARHEIGHT - BBARHEIGHT
 
         if MENUS[MENU].name == "Remote Control":
-            pass
+            if RECORDING:
+                if len(RCSCRIPT.lines) > 0:
+                    RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                RCSCRIPT.addLine(f"`RDP.Click {x} {y}")
 
 def mouseDragged(drag, button):
     pass
@@ -83,7 +96,9 @@ def mouseMoved(x,y,dx,dy, button):
     pass
 
 def preInit():
-    global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ
+    global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ, RECORDING, RCSCRIPT, RCTIME
+    RCSCRIPT = None
+    RCTIME = 0
     BBARHEIGHT = 50
     MENUBARHEIGHT = 25
     MENUS = [
@@ -99,6 +114,7 @@ def preInit():
         ]
     
     FUNCQ = []
+    RECORDING = False
     for x,button in enumerate(MENUS):
         button.buttonHeight = MENUBARHEIGHT - 5
         button.function = createSwitch(x)

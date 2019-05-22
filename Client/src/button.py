@@ -10,10 +10,10 @@ class Button(object):
         self.buttonHeight = height
         self.hover = False
         self.clicked = False
-        self.length = len(self.name) * (self.textSize / 2)+ 10
         self.function = function
         self.color = (120, 120, 120)
         self.select = False
+        self.length = len(self.name) * (self.textSize / 2)+ 10
     def Click(self, *args):
         self.clicked = True
     def Selected(self):
@@ -25,6 +25,7 @@ class Button(object):
     def NoHover(self):
         self.hover = False
     def CreateSurf(self):
+        self.length = len(self.name) * (self.textSize / 2)+ 10
         surf = pygame.Surface((self.length, self.buttonHeight))
         surf.fill(self.color)
         if self.hover:

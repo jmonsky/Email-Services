@@ -53,5 +53,5 @@ class ScriptLoader(object):
             if name.lower() == s.name.lower():
                 return s
 
-    def CreateDynamicScript(self, name="NEWDS"):
+    def CreateDynamicScript(self, name="NEWESS"):
         DS = DynamicScript(name)

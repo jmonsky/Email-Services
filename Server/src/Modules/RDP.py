@@ -1,6 +1,6 @@
 import mss
 import pyautogui
-
+import time
 pyautogui.PAUSE = 1
 pyautogui.FAILSAFE = True
 
@@ -72,3 +72,6 @@ def KeyDown(vars, key):
 
 def KeyUp(vars, key):
     pyautogui.keyUp(key)
+
+def Sleep(vars, t):
+    time.sleep(t)
