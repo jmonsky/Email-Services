@@ -1,0 +1,3 @@
+`RDP.GetResolution | String.IAddS "%% Resolution : " | Reply.Body
+`RDP.SSAll | String.LenS | String.IAddS "%% Monitors : " | Reply.Body
+`Reply.SendReply
