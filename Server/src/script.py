@@ -1,5 +1,6 @@
 import Modules.RDP as RDP
 import Modules.Reply as Reply
+import Modules.String as String
 import Modules.Math as Math
 import Modules.File as File
 import Modules.Log as Log

@@ -113,8 +113,23 @@ def mouseDragged(drag, button):
     pass
 
 def mouseMoved(x,y,dx,dy, button):
-    pass
-
+    global BUTTONS, MENUS, MENU
+    if y < MENUBARHEIGHT:
+        X = 0
+        for button in MENUS:
+            if x > X and x < button.length + X:
+                button.Hover()
+            else:
+                button.NoHover()
+            X = X + button.length + 10
+    if y > MENUBARHEIGHT and y < MENUBARHEIGHT + BBARHEIGHT:
+        X = 0
+        for button in BUTTONS[MENU]:
+            if x > X and x < button.length + X:
+                button.Hover()
+            else:
+                button.NoHover()
+            X = X + button.length + 10
 def nextMon():
     global SETTINGS
     m = SETTINGS["Monitor"]
