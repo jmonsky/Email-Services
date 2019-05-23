@@ -29,4 +29,4 @@ def IDiv(vars, a, b):
     return Div(vars, b, a)
 
 def Len(vars, item):
-    return len(item)
+    return f"'{len(item)}''"
