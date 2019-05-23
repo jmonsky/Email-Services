@@ -110,7 +110,8 @@ def preInit():
     global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ, RECORDING, RCSCRIPT, RCTIME, SETTINGS
     SETTINGS = {
         "Monitor":1,
-        "ReverseOffset":False,
+        "Monitors":1,
+        "ReverseMonitor":False,
     }
     RCSCRIPT = None
     RCTIME = 0
