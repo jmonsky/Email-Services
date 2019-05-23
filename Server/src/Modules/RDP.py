@@ -24,7 +24,7 @@ def PSS(vars, x, y, width, height):
 
 def SSAll(vars):
     with mss.mss() as sct:
-        return str([filename in sct.save()])
+        return str([filename for filename in sct.save()])
 
 def ClickAt(vars, x, y, t=0):
     pyautogui.click(x, y, duration=t)
