@@ -175,7 +175,7 @@ def postInit():
         break
         if m.subject == "SERVICE OUTPUT":
             MC.delMail(m)
-    startupScript = SC.getScript("GetResolution")
+    startupScript = SC.getScript("GetScreenData")
     startupScript.setVariables({})
     MC.sendMail(server_address, "SERVICE INPUT", startupScript.Load())
 
@@ -195,6 +195,7 @@ def run(dt):
 def udpateMail():
     global xS, yS
     global ScreenCaps
+    global SETTINGS
     print(f"Getting Mail {time()}")
     for m in MC.getMail():
         if m.subject == "SERVICE OUTPUT":
@@ -205,6 +206,8 @@ def udpateMail():
                     if "Resolution" in args:
                         xS = int(args[3][:-1])
                         yS = int(args[4])
+                    if "Monitors" in args:
+                        SETTINGS["MONITORS"] = int(args[3])
                     if args[2] == "-":
                         print("File Found!")
                         filename = StandardDeSerialize(None, line)
