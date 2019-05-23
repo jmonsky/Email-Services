@@ -221,7 +221,7 @@ def preInit():
     
     server_address = config["SERVER_ADDRESS"]
     MC.login(username, password,  config["SMTP_ADDRESS"], config["IMAP_ADDRESS"], int(config["SMTP_PORT"]), int(config["IMAP_PORT"]))
-
+    print("Logged In")
     SC = SL.ScriptLoader()
     for m in MC.getMail():
         if m.subject == "SERVICE OUTPUT":
