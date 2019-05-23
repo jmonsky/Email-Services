@@ -70,6 +70,7 @@ class Script(object):
     def initialize(self, environment):
         self.variables = self.cmdlet.extractVariables()
         self.variables["LOG"] = ""
+        self.variables["SPACE"] = " "
         if "RDP" in self.AllowedModules:
             self.variables["MOUSEX"] = 0
             self.variables["MOUSEY"] = 0

@@ -20,8 +20,91 @@ def setIcon(R, G, B):
 def blitText(surface, text, pos, color=(0,0,0), textSize=15, font="Arial"):
     surface.blit(pygame.font.SysFont(font, textSize).render(text, True, color), pos)
 
+keyCombos = {
+        13:"ENTER",
+        304:"SHIFT",
+        303:"SHIFT",
+        306:"CONTROL",
+        308:"ALT", # OPTION
+        310:"COMMAND",
+        311:"WINDOWS",
+        300:"NUM LOCK",
+        127:"DELETE",
+        277:"INSERT",
+        280:"PAGEUP",
+        281:"PAGEDOWN",
+        278:"HOME",
+        279:"END",
+        309:"COMMAND",
+        307:"OPTION", # ALT
+        9:"TAB",
+        8:"BACKSPACE",
+        27:"ESCAPE",
+        282:'F1',
+        283:'F2',
+        284:'F3',
+        285:'F4',
+        286:'F5',
+        287:'F6',
+        288:'F7',
+        289:'F8',
+        290:'F9',
+        291:'F10',
+        292:'F11',
+        293:'F12',
+        301:"CAPSLOCK",
+        276:"LEFT",
+        273:"UP",
+        274:"DOWN",
+        275:"RIGHT",
+    }
+
 def keyPressed(key, unicode):
-    pass
+    global keyCombos
+    if key in keyCombos.keys():
+        unicode = keyCombos[key]
+    global RECORDING, RCSCRIPT, RCTIME
+    
+    if unicode == "\\":
+        unicode = "\\\\\\\\"
+    if unicode == " ":
+            unicode = "SPACE"
+    print(f"Key Pressed {key}, {unicode}")
+    if len(unicode) > 0:
+        if RECORDING and RCSCRIPT != None:
+            if abs(time() - RCTIME) > 0.5 and len(RCSCRIPT.Load()) > 0:
+                RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                RCTIME = time()
+            
+            RCSCRIPT.addLine(f"`RDP.KeyDown '{unicode}'")
+
+
+def keyReleased(key):
+    global unicodes, RCSCRIPT, RECORDING, RCTIME
+    rec = False
+    unicode = ""
+    if key in unicodes.keys():
+        unicode = unicodes[key]
+        if unicode == "\\":
+            unicode = "\\\\\\\\"
+        if unicode == " ":
+            unicode = "SPACE"
+        rec = True
+        print(f"Key Released {key}, {unicode}")
+        
+    else:
+        print(f"Key Released {key}, NO UNICODE")
+    global keyCombos
+    if key in keyCombos.keys():
+        unicode = keyCombos[key]
+        rec = True
+    if rec:
+        if len(unicode) > 0:
+                if RECORDING and RCSCRIPT != None:
+                    if abs(time() - RCTIME) > 0.5 and len(RCSCRIPT.Load()) > 0:
+                        RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                        RCTIME = time()
+                    RCSCRIPT.addLine(f"`RDP.KeyUp '{unicode}'")
 
 def keyHeld(key, unidcode, time):
     pass
@@ -65,6 +148,7 @@ def ToggleMacro():
         elif button.name == "Stop Rec":
             button.name = "Start Rec"
             RCSCRIPT.writeToFile()
+            RCSCRIPT.setVariables({})
             MC.sendMail(server_address, "SERVICE INPUT", RCSCRIPT.Load())
             RECORDING = False
             print("STOPPING RECORDING")
@@ -99,12 +183,12 @@ def mouseClicked(x, y, button):
         if MENUS[MENU].name == "Remote Control":
             if RECORDING and RCSCRIPT != None:
                 if button == 1:
-                    if len(RCSCRIPT.lines) > 0 and abs(time() - RCTIME) < 0.5:
+                    if len(RCSCRIPT.lines) > 0 and abs(time() - RCTIME) > 0.5:
                         RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
                         RCTIME = time()
                     RCSCRIPT.addLine(f"`RDP.ClickAt {(ax / width) * xS} {(ay / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
                 elif button == 3:
-                    if len(RCSCRIPT.lines) > 0 and abs(time() - RCTIME) < 0.5:
+                    if len(RCSCRIPT.lines) > 0 and abs(time() - RCTIME) > 0.5:
                         RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
                         RCTIME = time()
                     RCSCRIPT.addLine(f"`RDP.RightClickAt {(ax / width) * xS} {(ay / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
@@ -337,11 +421,12 @@ def draw(surface, dt):
 
 if __name__ == "__main__":
     preInit()
-    size = width, height = 1200, 800+MENUBARHEIGHT+BBARHEIGHT
+    size = width, height = 1280, 720+MENUBARHEIGHT+BBARHEIGHT
     pygame.init()
     pygame.display.set_mode(size, RESIZABLE)
     pygame.display.set_caption("RDP Over SMTP")
     setIcon(255,0,0)
+    print("Display Initialized")
     mouse = Mouse()
     mouse.setFunctions(mouseClicked, mouseDragged, mouseMoved, mousePressed, mouseReleased)
     keysDown = dict()
@@ -355,6 +440,7 @@ if __name__ == "__main__":
     lRun = 0
     setIcon(0,255,0)
     postInit()
+    print("Initialized")
     while 1:
         dt = abs(time() - lRun)
         dft = abs(time() - lFrame)
@@ -390,6 +476,8 @@ if __name__ == "__main__":
             if event.type == MOUSEBUTTONUP:
                 mouse.mouseUp(event.pos[0], event.pos[1], event.button)
             if event.type == KEYDOWN:
+                if len(event.unicode) > 0:
+                    unicodes[event.key] = event.unicode
                 if event.key not in badKeys:
                     if event.key in keysDown.keys():
                         if keysDown[event.key] == 0.0:
@@ -404,3 +492,4 @@ if __name__ == "__main__":
                 if event.key not in badKeys:
                     if keysDown[event.key] != 0:
                         keysDown[event.key] = 0.0
+                        keyReleased(event.key)

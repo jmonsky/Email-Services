@@ -14,7 +14,7 @@ with open("server_config.txt", "r") as file:
     config = dict()
     for option in clist:
         config[option[0]] = option[1].strip("\n")
-    del clist
+    del clist   
 
 c = MailController()
 c.login(config["USERNAME"], config["PASSWORD"], config["SMTP_ADDRESS"], config["IMAP_ADDRESS"], int(config["SMTP_PORT"]), int(config["IMAP_PORT"]))
