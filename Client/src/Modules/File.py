@@ -20,13 +20,11 @@ def DeSerialize(vars, filename, serializedList):
 
 def StandardDeSerialize(vars, line, newFname = None):
     codes = line.split(" - ")
-    print(len(codes))
     fname = codes[0][2:].strip(" ")
     if type(newFname) == str:
         fname = newFname
     print(newFname)
     sList = codes[1]
-    print(sList)
     return DeSerialize(vars, fname, sList)
 
 def SDS(vars, line, nFname = None):

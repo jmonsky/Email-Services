@@ -28,3 +28,5 @@ def Div(vars, a, b):
 def IDiv(vars, a, b):
     return Div(vars, b, a)
 
+def Len(vars, item):
+    return len(item)

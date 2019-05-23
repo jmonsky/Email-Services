@@ -32,10 +32,10 @@ class DynamicScript(Script):
         self.exLines = None
 
     def addLine(self, line):
-        self.lines.append(line)
+        self.lines.append(line + "\n")
 
     def writeToFile(self):
-        with open(f"./Scripts/{self.name}.ess") as file:
+        with open(f"./Scripts/{self.name}.ess", "w+") as file:
             file.writelines(self.lines)
 
 
@@ -52,6 +52,3 @@ class ScriptLoader(object):
         for s in self.scripts:
             if name.lower() == s.name.lower():
                 return s
-
-    def CreateDynamicScript(self, name="NEWESS"):
-        DS = DynamicScript(name)

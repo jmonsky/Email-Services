@@ -53,16 +53,26 @@ def createSwitch(x):
     return switchTo
 
 def ToggleMacro():
-    global BUTTONS, SC, RECORDING, RCSCRIPT, RCTIME
+    global BUTTONS, SC, RECORDING, RCSCRIPT, RCTIME, server_address, MC
     for button in BUTTONS[MENU]:
         if button.name == "Start Rec":
-            RCSCRIPT = SC.CreateDynamicScript("Recording Script")
+            RCSCRIPT = SL.DynamicScript("Recording Script")
+            button.name = "Stop Rec"
             RCTIME = time()
+            RECORDING = True
+            print("STARTING RECORDING")
+            break
         elif button.name == "Stop Rec":
-            pass
-        break
+            button.name = "Start Rec"
+            RCSCRIPT.writeToFile()
+            MC.sendMail(server_address, "SERVICE INPUT", RCSCRIPT.Load())
+            RECORDING = False
+            print("STOPPING RECORDING")
+            #del RCSCRIPT
+            break
 
 def mouseClicked(x, y, button):
+    global RCTIME
     if y < MENUBARHEIGHT:
         X = 0
         for button in MENUS:
@@ -84,10 +94,11 @@ def mouseClicked(x, y, button):
         aheight = y - MENUBARHEIGHT - BBARHEIGHT
 
         if MENUS[MENU].name == "Remote Control":
-            if RECORDING:
+            if RECORDING and RCSCRIPT != None:
                 if len(RCSCRIPT.lines) > 0:
                     RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
-                RCSCRIPT.addLine(f"`RDP.Click {x} {y}")
+                    RCTIME = time()
+                RCSCRIPT.addLine(f"`RDP.ClickAt {(x / width) * xS} {(y / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
 
 def mouseDragged(drag, button):
     pass
@@ -96,7 +107,11 @@ def mouseMoved(x,y,dx,dy, button):
     pass
 
 def preInit():
-    global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ, RECORDING, RCSCRIPT, RCTIME
+    global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ, RECORDING, RCSCRIPT, RCTIME, SETTINGS
+    SETTINGS = {
+        "Monitor":1,
+        "ReverseOffset":False,
+    }
     RCSCRIPT = None
     RCTIME = 0
     BBARHEIGHT = 50
@@ -104,11 +119,12 @@ def preInit():
     MENUS = [
         Button("Remote Control"), 
         Button("Web"), 
-        Button("File Browser")
+        Button("File Browser"),
+        Button("Settings")
         ]
     MENU = 0
     BUTTONS = [
-        [Button("Quit", function=Exit), Button("Update", function=udpateMail), Button("Screen Shot", function=RequestScreenShot)], 
+        [Button("Quit", function=Exit), Button("Update", function=udpateMail), Button("Screen Shot", function=RequestScreenShot), Button("Start Rec", function=ToggleMacro)], 
         [Button("Quit", function=Exit),], 
         [Button("Quit", function=Exit),],
         ]
@@ -189,7 +205,7 @@ def udpateMail():
                         xS = int(args[3][:-1])
                         yS = int(args[4])
                     if args[2] == "-":
-                        print(f"File Found {args[1]}")
+                        print("File Found!")
                         filename = StandardDeSerialize(None, line)
                         for sc in ScreenCaps:
                             if sc.exists(filename):
