@@ -65,7 +65,7 @@ def GetResolution(vars):
     return f"'{x}, {y}'"
 
 def Typewrite(vars, key, t=0):
-    pyautogui.typewrite(key, ionterval=t)
+    pyautogui.typewrite(key, interval=t)
 
 def KeyDown(vars, key):
     pyautogui.keyDown(key)

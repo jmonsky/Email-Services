@@ -89,22 +89,50 @@ def mouseClicked(x, y, button):
             X = X + button.length + 10
     if y > MENUBARHEIGHT + BBARHEIGHT:
         ay = y - MENUBARHEIGHT - BBARHEIGHT
-        ax = x
+        factor = SETTINGS["Monitor"] - 1
+        if SETTINGS["ReverseMonitor"]:
+            factor = SETTINGS["Monitors"] - SETTINGS["Monitor"]
+        ax = x + xS * factor
         awidth = width
         aheight = y - MENUBARHEIGHT - BBARHEIGHT
 
         if MENUS[MENU].name == "Remote Control":
             if RECORDING and RCSCRIPT != None:
-                if len(RCSCRIPT.lines) > 0:
-                    RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
-                    RCTIME = time()
-                RCSCRIPT.addLine(f"`RDP.ClickAt {(x / width) * xS} {(y / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
+                if button == 1:
+                    if len(RCSCRIPT.lines) > 0 and abs(time() - RCTIME) < 0.5:
+                        RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                        RCTIME = time()
+                    RCSCRIPT.addLine(f"`RDP.ClickAt {(ax / width) * xS} {(ay / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
+                elif button == 3:
+                    if len(RCSCRIPT.lines) > 0 and abs(time() - RCTIME) < 0.5:
+                        RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                        RCTIME = time()
+                    RCSCRIPT.addLine(f"`RDP.RightClickAt {(ax / width) * xS} {(ay / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
 
 def mouseDragged(drag, button):
     pass
 
 def mouseMoved(x,y,dx,dy, button):
     pass
+
+def nextMon():
+    global SETTINGS
+    m = SETTINGS["Monitor"]
+    m = m + 1
+    if m > SETTINGS["Monitors"]:
+        m = SETTINGS["Monitors"]
+    SETTINGS["Monitor"] = m
+def prevMon():
+    global SETTINGS
+    m = SETTINGS["Monitor"]
+    m = m - 1
+    if m < 1:
+        m = 1
+    SETTINGS["Monitor"] = m
+
+def toggleRev():
+    global SETTINGS
+    SETTINGS["ReverseMonitor"] = not SETTINGS["ReverseMonitor"]
 
 def preInit():
     global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ, RECORDING, RCSCRIPT, RCTIME, SETTINGS
@@ -128,6 +156,13 @@ def preInit():
         [Button("Quit", function=Exit), Button("Update", function=udpateMail), Button("Screen Shot", function=RequestScreenShot), Button("Start Rec", function=ToggleMacro)], 
         [Button("Quit", function=Exit),], 
         [Button("Quit", function=Exit),],
+        [
+            Button("Quit", function=Exit),
+            Button("Update", function=udpateMail),
+            Button("Request Screen Data", function=getScreenData),
+            Button("Prev Monitor", function=prevMon),
+            Button("Next Monitor", function=nextMon),
+            Button("Reverse Monitor", function=toggleRev)]
         ]
     
     FUNCQ = []
@@ -167,6 +202,14 @@ def preInit():
     MC.login(username, password,  config["SMTP_ADDRESS"], config["IMAP_ADDRESS"], int(config["SMTP_PORT"]), int(config["IMAP_PORT"]))
 
     SC = SL.ScriptLoader()
+    for m in MC.getMail():
+        if m.subject == "SERVICE OUTPUT":
+            MC.delMail(m)
+
+def getScreenData():
+    startupScript = SC.getScript("GetScreenData")
+    startupScript.setVariables({})
+    MC.sendMail(server_address, "SERVICE INPUT", startupScript.Load())
 
 def postInit():
     global xS, yS
@@ -175,9 +218,7 @@ def postInit():
         break
         if m.subject == "SERVICE OUTPUT":
             MC.delMail(m)
-    startupScript = SC.getScript("GetScreenData")
-    startupScript.setVariables({})
-    MC.sendMail(server_address, "SERVICE INPUT", startupScript.Load())
+    getScreenData()
 
     ScreenCaps = []
 
@@ -207,7 +248,7 @@ def udpateMail():
                         xS = int(args[3][:-1])
                         yS = int(args[4])
                     if "Monitors" in args:
-                        SETTINGS["MONITORS"] = int(args[3])
+                        SETTINGS["Monitors"] = int(args[3])
                     if args[2] == "-":
                         print("File Found!")
                         filename = StandardDeSerialize(None, line)
@@ -219,8 +260,9 @@ def udpateMail():
                     MC.delMail(m)
 
 def RequestScreenShot():
+    global SETTINGS
     screenshotScript = SC.getScript("ScreenShot")
-    screenshotScript.setVariables({})
+    screenshotScript.setVariables(SETTINGS)
     MC.sendMail(server_address, "SERVICE INPUT", screenshotScript.Load())
     print("Requesting screenshot")
 
@@ -230,6 +272,8 @@ def Exit():
     sys.exit()
 
 def draw(surface, dt):
+    surface.fill((255, 255, 255))
+
     MenuBar = pygame.Surface((width, MENUBARHEIGHT))
     ButtonBar = pygame.Surface((width, BBARHEIGHT))
     TotalHeight = MENUBARHEIGHT + BBARHEIGHT
@@ -255,6 +299,15 @@ def draw(surface, dt):
             s.scale(width, height-TotalHeight)
             i = s.getPicture()
             surface.blit(i,(s.Position[0],TotalHeight+s.Position[1]))
+    
+    if MENUS[MENU].name == "Settings":
+        settingTexts = []
+        for S in SETTINGS.keys():
+            settingTexts.append(f"{S} : {SETTINGS[S]}")
+        y = 1
+        for t in settingTexts:
+            blitText(surface, t, (20, y * 40 + TotalHeight), textSize=30)
+            y += 1
 
     surface.blit(MenuBar, (0,0))
     surface.blit(ButtonBar, (0, MENUBARHEIGHT))
