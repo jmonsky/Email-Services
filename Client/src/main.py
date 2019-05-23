@@ -122,6 +122,9 @@ def mouseMoved(x,y,dx,dy, button):
             else:
                 button.NoHover()
             X = X + button.length + 10
+    else:
+        for button in MENUS:
+            button.NoHover()
     if y > MENUBARHEIGHT and y < MENUBARHEIGHT + BBARHEIGHT:
         X = 0
         for button in BUTTONS[MENU]:
@@ -130,6 +133,9 @@ def mouseMoved(x,y,dx,dy, button):
             else:
                 button.NoHover()
             X = X + button.length + 10
+    else:
+        for button in BUTTONS[MENU]:
+            button.NoHover()
 def nextMon():
     global SETTINGS
     m = SETTINGS["Monitor"]
@@ -257,8 +263,8 @@ def udpateMail():
         if m.subject == "SERVICE OUTPUT":
             for line in str(m.message).split("\n"):
                 if line[:2] == f"%%":
-                    print(line[:5])
                     args = line.split(" ")
+                    print(f"{args[1]}")
                     if "Resolution" in args:
                         xS = int(args[3][:-1])
                         yS = int(args[4])

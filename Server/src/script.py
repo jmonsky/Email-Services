@@ -23,7 +23,7 @@ class LineOfCode(object):
 
     def evaluate(self, vars):
         if self.auth:
-            print(f"{self.function}(vars, {self.arguments})")
+            print(f"{self.function}")
             out = eval(f"{self.function}(vars, {self.arguments})")
             if self.child != None:
                 self.child.arguments = ",".join([out, self.child.arguments])
