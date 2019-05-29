@@ -1,1 +1,1 @@
-`File.RelNavigate "/.."
+`File.RelNavigate '{var["Path"]}'

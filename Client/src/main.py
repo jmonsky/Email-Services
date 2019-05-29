@@ -273,13 +273,18 @@ def toggleRev():
     SETTINGS["ReverseMonitor"] = not SETTINGS["ReverseMonitor"]
 
 def upDirectory():
-    global VARIABLES
+    global MC, SC, server_address, VARIABLES
+    pathargs = VARIABLES["Path"].split("/")
+    newdir = "/".join(pathargs[:-1])
+    updirscript = SC.getScript("UpDir")
+    updirscript.setVariables({"Path":newdir})
+    MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updirscript.Load())
 
 def CycleUpdateTimes():
     global SETTINGS
     SETTINGS["FileUpdateRate"] = SETTINGS["FileUpdateRate"] + 2
-    if SETTINGS["FileUpdateRate"] > 20:
-        SETTINGS["FileUpdateRate"] = 2
+    if SETTINGS["FileUpdateRate"] > 30:
+        SETTINGS["FileUpdateRate"] = 6
 
 def ToggleUpdates():
     global SETTINGS
@@ -292,7 +297,7 @@ def preInit():
         "Monitors":1,
         "ReverseMonitor":False,
         "TargetSystem":"Windows",
-        "FileUpdateRate":4,
+        "FileUpdateRate":10,
         "AutoUpdateFiles":True,
     }
     RCSCRIPT = None
@@ -409,6 +414,7 @@ def run(dt, runs):
         updateScript.setVariables({})
         MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updateScript.Load())
         udpateMail()
+        print(VARIABLES["Path"])
 
 def udpateMail():
     global xS, yS
