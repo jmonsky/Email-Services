@@ -4,4 +4,6 @@ IMAP_PORT:993
 SMTP_PORT:465
 IMAP_ADDRESS:imap.gmail.com
 SMTP_ADDRESS:smtp.gmail.com
+SERVER_ID:1000
+
 ALLOWED_MODULES:Reply,RDP,Web,File,Log,Math,String

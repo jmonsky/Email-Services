@@ -6,10 +6,11 @@ from Email import Email
 
 
 class MailController(object):
-    def __init__(self):
+    def __init__(self, ID):
         self.imap = None
         self.smtp = None
         self.address = None
+        self.ID = ID
     
     def login(self, username, password, smtp_address, imap_address, smtp_port, imap_port):
         self.imap = imaplib.IMAP4_SSL(imap_address, imap_port)

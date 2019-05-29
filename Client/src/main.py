@@ -21,49 +21,71 @@ def blitText(surface, text, pos, color=(0,0,0), textSize=15, font="Arial"):
     surface.blit(pygame.font.SysFont(font, textSize).render(text, True, color), pos)
 
 # TODO: ADD CROSS PLATFORM MAC/WINDOWS CONTROL / ALT Keys
-keyCombos = {
-        13:"ENTER",
-        304:"SHIFT",
-        303:"SHIFT",
-        306:"CONTROL",
-        308:"ALT", # OPTION
-        310:"COMMAND",
-        311:"WINDOWS",
-        300:"NUM LOCK",
-        127:"DELETE",
-        277:"INSERT",
-        280:"PAGEUP",
-        281:"PAGEDOWN",
-        278:"HOME",
-        279:"END",
-        309:"COMMAND",
-        307:"OPTION", # ALT
-        9:"TAB",
-        8:"BACKSPACE",
-        27:"ESCAPE",
-        282:'F1',
-        283:'F2',
-        284:'F3',
-        285:'F4',
-        286:'F5',
-        287:'F6',
-        288:'F7',
-        289:'F8',
-        290:'F9',
-        291:'F10',
-        292:'F11',
-        293:'F12',
-        301:"CAPSLOCK",
-        276:"LEFT",
-        273:"UP",
-        274:"DOWN",
-        275:"RIGHT",
-    }
+def keyCombos():
+    global SETTINGS
+    os = SETTINGS["TargetSystem"]
+    return {
+            13:"ENTER",
+            304:"SHIFT",
+            303:"SHIFT",
+            306:"CONTROL",
+            308:{
+                "Windows":"ALT",
+                "Linux":"ALT",
+                "MAC":"OPTION"
+                }[os],
+            310:{
+                "Windows":"WINDOWS",
+                "Linux":"WINDOWS",
+                "MAC":"COMMAND"
+                }[os],
+            311:{
+                "Windows":"WINDOWS",
+                "Linux":"WINDOWS",
+                "MAC":"COMMAND"
+                }[os],
+            300:"NUM LOCK",
+            127:"DELETE",
+            277:"INSERT",
+            280:"PAGEUP",
+            281:"PAGEDOWN",
+            278:"HOME",
+            279:"END",
+            309:{
+                "Windows":"WINDOWS",
+                "Linux":"WINDOWS",
+                "MAC":"COMMAND"
+                }[os],
+            307:{
+                "Windows":"ALT",
+                "Linux":"ALT",
+                "MAC":"OPTION"
+                }[os],
+            9:"TAB",
+            8:"BACKSPACE",
+            27:"ESCAPE",
+            282:'F1',
+            283:'F2',
+            284:'F3',
+            285:'F4',
+            286:'F5',
+            287:'F6',
+            288:'F7',
+            289:'F8',
+            290:'F9',
+            291:'F10',
+            292:'F11',
+            293:'F12',
+            301:"CAPSLOCK",
+            276:"LEFT",
+            273:"UP",
+            274:"DOWN",
+            275:"RIGHT",
+        }
 
 def keyPressed(key, unicode):
-    global keyCombos
-    if key in keyCombos.keys():
-        unicode = keyCombos[key]
+    if key in keyCombos().keys():
+        unicode = keyCombos()[key]
     global RECORDING, RCSCRIPT, RCTIME
     
     if unicode == "\\":
@@ -95,9 +117,8 @@ def keyReleased(key):
         
     else:
         print(f"Key Released {key}, NO UNICODE")
-    global keyCombos
-    if key in keyCombos.keys():
-        unicode = keyCombos[key]
+    if key in keyCombos().keys():
+        unicode = keyCombos()[key]
         rec = True
     if rec:
         if len(unicode) > 0:
@@ -150,7 +171,7 @@ def ToggleMacro():
             button.name = "Start Rec"
             RCSCRIPT.writeToFile()
             RCSCRIPT.setVariables({})
-            MC.sendMail(server_address, "SERVICE INPUT", RCSCRIPT.Load())
+            MC.sendMail(server_address, f"SERVICE INPUT : {ID} : {SID}", RCSCRIPT.Load())
             RECORDING = False
             print("STOPPING RECORDING")
             #del RCSCRIPT
@@ -236,6 +257,15 @@ def prevMon():
         m = 1
     SETTINGS["Monitor"] = m
 
+def cycleTargetSystem():
+    global SETTINGS
+    nextSystem = {
+        "Windows":"Linux",
+        "Linux":"Mac",
+        "Mac":"Windows"
+    }
+    SETTINGS["TargetSystem"] = nextSystem[SETTINGS["TargetSystem"]]
+
 def toggleRev():
     global SETTINGS
     SETTINGS["ReverseMonitor"] = not SETTINGS["ReverseMonitor"]
@@ -246,6 +276,7 @@ def preInit():
         "Monitor":1,
         "Monitors":1,
         "ReverseMonitor":False,
+        "TargetSystem":"Windows",
     }
     RCSCRIPT = None
     RCTIME = 0
@@ -268,7 +299,8 @@ def preInit():
             Button("Request Screen Data", function=getScreenData),
             Button("Prev Monitor", function=prevMon),
             Button("Next Monitor", function=nextMon),
-            Button("Reverse Monitor", function=toggleRev)]
+            Button("Reverse Monitor", function=toggleRev),
+            Button("Cycle System", function=cycleTargetSystem)]
         ]
     
     FUNCQ = []
@@ -283,7 +315,7 @@ def preInit():
         for button in bList:
             button.buttonHeight = BBARHEIGHT
 
-    global MC, server_address, SC
+    global MC, server_address, SC, ID, SID
     with open("client_config.txt", "r") as file:
         clist = [x.split(":") for x in file.readlines() if len(x.strip("\n")) > 0]
         config = dict()
@@ -302,27 +334,25 @@ def preInit():
         if "USERNAME" in config.keys():
             print("No password found in config file")
         password = getpass.getpass()
+    ID = config["CLIENT_ID"]
+    SID = config["SERVER_ID"]
     MC = MailController()
     
     server_address = config["SERVER_ADDRESS"]
     MC.login(username, password,  config["SMTP_ADDRESS"], config["IMAP_ADDRESS"], int(config["SMTP_PORT"]), int(config["IMAP_PORT"]))
     print("Logged In")
     SC = SL.ScriptLoader()
-    for m in MC.getMail():
-        if m.subject == "SERVICE OUTPUT":
-            MC.delMail(m)
 
 def getScreenData():
     startupScript = SC.getScript("GetScreenData")
     startupScript.setVariables({})
-    MC.sendMail(server_address, "SERVICE INPUT", startupScript.Load())
+    MC.sendMail(server_address, f"SERVICE INPUT : {ID} : {SID}", startupScript.Load())
 
 def postInit():
     global xS, yS
     global ScreenCaps
     for m in MC.getMail():
-        break
-        if m.subject == "SERVICE OUTPUT":
+        if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
             MC.delMail(m)
     getScreenData()
 
@@ -345,7 +375,7 @@ def udpateMail():
     global SETTINGS
     print(f"Getting Mail {time()}")
     for m in MC.getMail():
-        if m.subject == "SERVICE OUTPUT":
+        if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
             for line in str(m.message).split("\n"):
                 if line[:2] == f"%%":
                     args = line.split(" ")
@@ -369,7 +399,7 @@ def RequestScreenShot():
     global SETTINGS
     screenshotScript = SC.getScript("ScreenShot")
     screenshotScript.setVariables(SETTINGS)
-    MC.sendMail(server_address, "SERVICE INPUT", screenshotScript.Load())
+    MC.sendMail(server_address, f"SERVICE INPUT : {ID} : {SID}", screenshotScript.Load())
     print("Requesting screenshot")
 
 def Exit():

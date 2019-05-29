@@ -3,6 +3,8 @@ SMTP_PORT:465
 IMAP_ADDRESS:imap.gmail.com
 SMTP_ADDRESS:smtp.gmail.com
 SERVER_ADDRESS:ServiceOverEmail@gmail.com
+SERVER_ID:1000
+CLIENT_ID:2000
 
 USERNAME:ServiceOverEmail@gmail.com
 PASSWORD:WhatIsLife123!@#

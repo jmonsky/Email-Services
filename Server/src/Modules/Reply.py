@@ -16,7 +16,8 @@ def SendReply(vars):
     controller = vars["MAILCONTROLLER"]
     sender = vars["SENDER"]
     subject = vars["SUBJECT"]
-    controller.sendMail(sender, f"SERVICE OUTPUT", body)
+    senderID = vars["CLIENTID"]
+    controller.sendMail(sender, f"SERVICE OUTPUT : {senderID}", body)
 
 def SendReplyVar(vars, variable):
     SendReply(vars, vars[variable])

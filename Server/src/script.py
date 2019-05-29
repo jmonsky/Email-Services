@@ -79,6 +79,7 @@ class Script(object):
             self.variables["MAILCONTROLLER"] = environment
             self.variables["SENDER"] = self.cmdlet.respondTo
             self.variables["SUBJECT"] = self.cmdlet.tag
+            self.variables["CLIENTID"] = self.cmdlet.senderTag
             self.variables["MailBody"] = ""
             self.variables["BODY"] = ""
 

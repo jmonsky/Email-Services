@@ -3,6 +3,7 @@ class Cmdlet(object):
     def __init__(self, mail):
         self.respondTo = mail.sender
         self.tag = mail.subject
+        self.senderTag = mail.subject.split(":")[2].strip(" ")
 
         self.commands = [l[1:] for l in str(mail.message).split("\n") if len(l) > 0 and l[0] == "`"]
         self.data = [x[1:] for x in str(mail.message).split("\n") if len(x) > 0 and x[0] == "~"]
