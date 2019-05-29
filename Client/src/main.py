@@ -275,10 +275,11 @@ def toggleRev():
 def upDirectory():
     global MC, SC, server_address, VARIABLES
     pathargs = VARIABLES["Path"].split("/") 
-    newdir = "/".join(pathargs[:-1])
-    if len(pathargs[0].split(":")) > 1:
-        newdir = pathargs[0]+"/".join(pathargs[1:-1])
     
+    newdir = "/".join(pathargs[:-1])
+    if len(pathargs) == 1:
+        pathargs = VARIABLES["PATH"].split("\\")
+        newdir = pathargs[0]+"\\".join(pathargs[1:-1])
     updirscript = SC.getScript("UpDir")
     updirscript.setVariables({"Path":newdir})
     MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updirscript.Load())
