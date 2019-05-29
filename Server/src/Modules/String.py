@@ -4,3 +4,6 @@ def IAddS(vars, a, b):
 
 def LenS(vars, item):
     return f"'{len(item)}'"
+
+def DoubleBS(vars, item):
+    return f"'{item}'".replace("\\", "\\\\")

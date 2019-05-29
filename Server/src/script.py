@@ -6,6 +6,7 @@ import Modules.Math as Math
 import Modules.Log as Log
 import Modules.File as File
 #!!#
+import os
 
 class LineOfCode(object):
     def __init__(self, contents, authorizedModules=[]):
@@ -82,6 +83,8 @@ class Script(object):
             self.variables["CLIENTID"] = self.cmdlet.senderTag
             self.variables["MailBody"] = ""
             self.variables["BODY"] = ""
+        if "File" in self.AllowedModules:
+            self.variables["DIR"] = os.getcwd()
 
     def execute(self):
         for line in self.lines:

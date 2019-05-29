@@ -32,17 +32,17 @@ def keyCombos():
             308:{
                 "Windows":"ALT",
                 "Linux":"ALT",
-                "MAC":"OPTION"
+                "Mac":"OPTION"
                 }[os],
             310:{
                 "Windows":"WINDOWS",
                 "Linux":"WINDOWS",
-                "MAC":"COMMAND"
+                "Mac":"COMMAND"
                 }[os],
             311:{
                 "Windows":"WINDOWS",
                 "Linux":"WINDOWS",
-                "MAC":"COMMAND"
+                "Mac":"COMMAND"
                 }[os],
             300:"NUM LOCK",
             127:"DELETE",
@@ -54,12 +54,12 @@ def keyCombos():
             309:{
                 "Windows":"WINDOWS",
                 "Linux":"WINDOWS",
-                "MAC":"COMMAND"
+                "Mac":"COMMAND"
                 }[os],
             307:{
                 "Windows":"ALT",
                 "Linux":"ALT",
-                "MAC":"OPTION"
+                "Mac":"OPTION"
                 }[os],
             9:"TAB",
             8:"BACKSPACE",
@@ -84,49 +84,51 @@ def keyCombos():
         }
 
 def keyPressed(key, unicode):
-    if key in keyCombos().keys():
-        unicode = keyCombos()[key]
-    global RECORDING, RCSCRIPT, RCTIME
-    
-    if unicode == "\\":
-        unicode = "\\\\\\\\"
-    if unicode == " ":
-            unicode = "SPACE"
-    print(f"Key Pressed {key}, {unicode}")
-    if len(unicode) > 0:
-        if RECORDING and RCSCRIPT != None:
-            if abs(time() - RCTIME) > 0.5 and len(RCSCRIPT.Load()) > 0:
-                RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
-                RCTIME = time()
-            
-            RCSCRIPT.addLine(f"`RDP.KeyDown '{unicode}'")
+    if MENUS[MENU].name == "Remote Control":
+        if key in keyCombos().keys():
+            unicode = keyCombos()[key]
+        global RECORDING, RCSCRIPT, RCTIME
+        
+        if unicode == "\\":
+            unicode = "\\\\\\\\"
+        if unicode == " ":
+                unicode = "SPACE"
+        print(f"Key Pressed {key}, {unicode}")
+        if len(unicode) > 0:
+            if RECORDING and RCSCRIPT != None:
+                if abs(time() - RCTIME) > 0.5 and len(RCSCRIPT.Load()) > 0:
+                    RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                    RCTIME = time()
+                
+                RCSCRIPT.addLine(f"`RDP.KeyDown '{unicode}'")
 
 
 def keyReleased(key):
     global unicodes, RCSCRIPT, RECORDING, RCTIME
-    rec = False
-    unicode = ""
-    if key in unicodes.keys():
-        unicode = unicodes[key]
-        if unicode == "\\":
-            unicode = "\\\\\\\\"
-        if unicode == " ":
-            unicode = "SPACE"
-        rec = True
-        print(f"Key Released {key}, {unicode}")
-        
-    else:
-        print(f"Key Released {key}, NO UNICODE")
-    if key in keyCombos().keys():
-        unicode = keyCombos()[key]
-        rec = True
-    if rec:
-        if len(unicode) > 0:
-                if RECORDING and RCSCRIPT != None:
-                    if abs(time() - RCTIME) > 0.5 and len(RCSCRIPT.Load()) > 0:
-                        RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
-                        RCTIME = time()
-                    RCSCRIPT.addLine(f"`RDP.KeyUp '{unicode}'")
+    if MENUS[MENU].name == "Remote Control":
+        rec = False
+        unicode = ""
+        if key in unicodes.keys():
+            unicode = unicodes[key]
+            if unicode == "\\":
+                unicode = "\\\\\\\\"
+            if unicode == " ":
+                unicode = "SPACE"
+            rec = True
+            print(f"Key Released {key}, {unicode}")
+            
+        else:
+            print(f"Key Released {key}, NO UNICODE")
+        if key in keyCombos().keys():
+            unicode = keyCombos()[key]
+            rec = True
+        if rec:
+            if len(unicode) > 0:
+                    if RECORDING and RCSCRIPT != None:
+                        if abs(time() - RCTIME) > 0.5 and len(RCSCRIPT.Load()) > 0:
+                            RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
+                            RCTIME = time()
+                        RCSCRIPT.addLine(f"`RDP.KeyUp '{unicode}'")
 
 def keyHeld(key, unidcode, time):
     pass
@@ -362,12 +364,16 @@ def postInit():
     yS = 1080
 
 def run(dt):
-    global ScreenCaps, FUNCQ
+    global ScreenCaps, FUNCQ, MC, SC
     ScreenCaps = [x.update() for x in ScreenCaps]
     for item in FUNCQ:
         if type(item) == Button:
             item.execute()
     FUNCQ = []
+    if MENUS[MENU].name == "File Browser":
+        updateScript = SC.getScript("GetFileData")
+        updateScript.setVariables({})
+        MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updateScript.Load())
 
 def udpateMail():
     global xS, yS
@@ -385,7 +391,7 @@ def udpateMail():
                         yS = int(args[4])
                     if "Monitors" in args:
                         SETTINGS["Monitors"] = int(args[3])
-                    if args[2] == "-":
+                    if "Attachment" in args:
                         print("File Found!")
                         filename = StandardDeSerialize(None, line)
                         for sc in ScreenCaps:
@@ -393,7 +399,13 @@ def udpateMail():
                                 break
                         else:
                             ScreenCaps.append(ScreenCap(filename))
-                    MC.delMail(m)
+                    if "Dir" in args:
+                        print(args)
+                    if "File" in args:
+                        print(args)
+                    if "Path" in args:
+                        print(args)
+            MC.delMail(m)
 
 def RequestScreenShot():
     global SETTINGS
