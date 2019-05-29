@@ -10,11 +10,11 @@ from Command import Cmdlet
 import script
 
 with open("server_config.txt", "r") as file:
-    clist = [x.split(":") for x in file.readlines()]
+    clist = [x.split(":") for x in file.readlines() if len(x.strip("\n")) > 0]
     config = dict()
     for option in clist:
         config[option[0]] = option[1].strip("\n")
-    del clist   
+    del clist
 
 ID = config["SERVER_ID"]
 c = MailController(ID)

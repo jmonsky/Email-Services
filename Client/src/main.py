@@ -171,7 +171,7 @@ def ToggleMacro():
             button.name = "Start Rec"
             RCSCRIPT.writeToFile()
             RCSCRIPT.setVariables({})
-            MC.sendMail(server_address, f"SERVICE INPUT : {ID} : {SID}", RCSCRIPT.Load())
+            MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", RCSCRIPT.Load())
             RECORDING = False
             print("STOPPING RECORDING")
             #del RCSCRIPT
@@ -346,7 +346,7 @@ def preInit():
 def getScreenData():
     startupScript = SC.getScript("GetScreenData")
     startupScript.setVariables({})
-    MC.sendMail(server_address, f"SERVICE INPUT : {ID} : {SID}", startupScript.Load())
+    MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", startupScript.Load())
 
 def postInit():
     global xS, yS
@@ -399,7 +399,7 @@ def RequestScreenShot():
     global SETTINGS
     screenshotScript = SC.getScript("ScreenShot")
     screenshotScript.setVariables(SETTINGS)
-    MC.sendMail(server_address, f"SERVICE INPUT : {ID} : {SID}", screenshotScript.Load())
+    MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", screenshotScript.Load())
     print("Requesting screenshot")
 
 def Exit():
