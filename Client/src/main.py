@@ -272,6 +272,19 @@ def toggleRev():
     global SETTINGS
     SETTINGS["ReverseMonitor"] = not SETTINGS["ReverseMonitor"]
 
+def upDirectory():
+    global VARIABLES
+
+def CycleUpdateTimes():
+    global SETTINGS
+    SETTINGS["FileUpdateRate"] = SETTINGS["FileUpdateRate"] + 2
+    if SETTINGS["FileUpdateRate"] > 20:
+        SETTINGS["FileUpdateRate"] = 2
+
+def ToggleUpdates():
+    global SETTINGS
+    SETTINGS["AutoUpdateFiles"] = not SETTINGS["AutoUpdateFiles"]
+
 def preInit():
     global MENUS, MENU, BUTTONS, BBARHEIGHT, MENUBARHEIGHT, FUNCQ, RECORDING, RCSCRIPT, RCTIME, SETTINGS
     SETTINGS = {
@@ -279,6 +292,8 @@ def preInit():
         "Monitors":1,
         "ReverseMonitor":False,
         "TargetSystem":"Windows",
+        "FileUpdateRate":4,
+        "AutoUpdateFiles":True,
     }
     RCSCRIPT = None
     RCTIME = 0
@@ -292,9 +307,19 @@ def preInit():
         ]
     MENU = 0
     BUTTONS = [
-        [Button("Quit", function=Exit), Button("Update", function=udpateMail), Button("Screen Shot", function=RequestScreenShot), Button("Start Rec", function=ToggleMacro)], 
+        [
+            Button("Quit", function=Exit), 
+            Button("Update", function=udpateMail), 
+            Button("Screen Shot", function=RequestScreenShot), 
+            Button("Start Rec", function=ToggleMacro)
+        ], 
         [Button("Quit", function=Exit),], 
-        [Button("Quit", function=Exit),],
+        [
+            Button("Quit", function=Exit),
+            Button("Toggle AutoUpdate", function=ToggleUpdates),
+            Button("Upload File"),
+            Button("Up Directory", function=upDirectory),
+        ],
         [
             Button("Quit", function=Exit),
             Button("Update", function=udpateMail),
@@ -302,8 +327,10 @@ def preInit():
             Button("Prev Monitor", function=prevMon),
             Button("Next Monitor", function=nextMon),
             Button("Reverse Monitor", function=toggleRev),
-            Button("Cycle System", function=cycleTargetSystem)]
-        ]
+            Button("Cycle System", function=cycleTargetSystem),
+            Button("Change Time", function=CycleUpdateTimes),
+        ],
+    ]
     
     FUNCQ = []
     RECORDING = False
@@ -353,6 +380,13 @@ def getScreenData():
 def postInit():
     global xS, yS
     global ScreenCaps
+    global VARIABLES
+    VARIABLES = {
+        "Files":[],
+        "Dirs":[],
+        "Path":"",
+        "Listings":[],
+    }
     for m in MC.getMail():
         if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
             MC.delMail(m)
@@ -363,23 +397,25 @@ def postInit():
     xS = 1920  
     yS = 1080
 
-def run(dt):
+def run(dt, runs):
     global ScreenCaps, FUNCQ, MC, SC
     ScreenCaps = [x.update() for x in ScreenCaps]
     for item in FUNCQ:
         if type(item) == Button:
             item.execute()
     FUNCQ = []
-    if MENUS[MENU].name == "File Browser":
+    if MENUS[MENU].name == "File Browser" and runs % SETTINGS["FileUpdateRate"] == 0 and SETTINGS["AutoUpdateFiles"]:
         updateScript = SC.getScript("GetFileData")
         updateScript.setVariables({})
         MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updateScript.Load())
+        udpateMail()
 
 def udpateMail():
     global xS, yS
     global ScreenCaps
-    global SETTINGS
+    global SETTINGS, VARIABLES
     print(f"Getting Mail {time()}")
+    first = False
     for m in MC.getMail():
         if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
             for line in str(m.message).split("\n"):
@@ -394,17 +430,28 @@ def udpateMail():
                     if "Attachment" in args:
                         print("File Found!")
                         filename = StandardDeSerialize(None, line)
-                        for sc in ScreenCaps:
-                            if sc.exists(filename):
-                                break
-                        else:
-                            ScreenCaps.append(ScreenCap(filename))
+                        if filename.split(".")[1].strip("'") == "png":
+                            print("Screenshot found")
+                            for sc in ScreenCaps:
+                                if sc.exists(filename):
+                                    break
+                            else:
+                                ScreenCaps.append(ScreenCap(filename))
+                    if "Dir" in args or "File" in args:
+                        if not first:
+                            first = True
+                            VARIABLES["Files"] = []
+                            VARIABLES["Dirs"] = []
                     if "Dir" in args:
-                        print(args)
+                        d = " ".join(args[3:])
+                        VARIABLES["Dirs"].append(d)
+                        VARIABLES["Listings"].append(None)
                     if "File" in args:
-                        print(args)
+                        f = " ".join(args[3:])
+                        VARIABLES["Files"].append(f)
                     if "Path" in args:
-                        print(args)
+                        p = " ".join(args[3:])
+                        VARIABLES["Path"] = p
             MC.delMail(m)
 
 def RequestScreenShot():
@@ -480,6 +527,7 @@ if __name__ == "__main__":
     lFrame = 0
     runRate = 1
     runTime = 1/runRate
+    runs = 0
     lRun = 0
     setIcon(0,255,0)
     postInit()
@@ -488,7 +536,10 @@ if __name__ == "__main__":
         dt = abs(time() - lRun)
         dft = abs(time() - lFrame)
         if abs(time() - lRun) > runTime:
-            run(dt)
+            run(dt, runs)
+            runs += 1
+            if runs > 1000:
+                runs = 0
             lRun = time()
 
         if abs(time() - lFrame) > frameTime:
