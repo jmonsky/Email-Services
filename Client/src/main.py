@@ -1,6 +1,7 @@
 from time import time
 import sys
 import getpass
+import os
 
 import pygame
 from pygame.locals import *
@@ -8,9 +9,9 @@ from pygame.locals import *
 from mouse import Mouse
 import Modules.ScriptLoader as SL
 from mailController import MailController
-from Modules.File import StandardDeSerialize, StandardSerialize
+from Modules.File import StandardDeSerialize, StandardSerialize, GetFiles, GetDirectories
 from Modules.screencap import ScreenCap
-from button import Button
+from button import Button, ListEntry
 
 def setIcon(R, G, B):
     icon = pygame.Surface((32, 32))
@@ -134,7 +135,10 @@ def keyHeld(key, unidcode, time):
     pass
 
 def mousePressed(x, y, button):
-    pass
+    if y > MENUBARHEIGHT + BBARHEIGHT:
+        # 4 up
+        # 5 down
+        pass
 
 def mouseReleased(x, y, button):
     pass
@@ -278,11 +282,21 @@ def upDirectory():
     
     newdir = "/".join(pathargs[:-1])
     if len(pathargs) == 1:
-        pathargs = VARIABLES["PATH"].split("\\")
-        newdir = pathargs[0]+"\\".join(pathargs[1:-1])
+        pathargs = VARIABLES["Path"].split("\\")
+        newdir = "\\".join(pathargs[:-1])
     updirscript = SC.getScript("UpDir")
     updirscript.setVariables({"Path":newdir})
     MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updirscript.Load())
+
+def upDirectoryLocal():
+    global MC, SC, server_address, VARIABLES
+    pathargs = VARIABLES["LocalPath"].split("/") 
+    
+    newdir = "/".join(pathargs[:-1])
+    if len(pathargs) == 1:
+        pathargs = VARIABLES["LocalPath"].split("\\")
+        newdir = "\\".join(pathargs[:-1])
+    VARIABLES["LocalPath"] = newdir
 
 def CycleUpdateTimes():
     global SETTINGS
@@ -326,8 +340,8 @@ def preInit():
         [
             Button("Quit", function=Exit),
             Button("Toggle AutoUpdate", function=ToggleUpdates),
-            Button("Upload File"),
-            Button("Up Directory", function=upDirectory),
+            Button("R Up", function=upDirectory),
+            Button("L Up", function=upDirectoryLocal),
         ],
         [
             Button("Quit", function=Exit),
@@ -395,6 +409,7 @@ def postInit():
         "Dirs":[],
         "Path":"",
         "Listings":[],
+        "LocalPath":os.getcwd(),
     }
     for m in MC.getMail():
         if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
@@ -455,10 +470,17 @@ def udpateMail():
                     if "Dir" in args:
                         d = " ".join(args[3:])
                         VARIABLES["Dirs"].append(d)
-                        VARIABLES["Listings"].append(None)
+                        VARIABLES["Listings"].append(ListEntry(d, [
+                            Button("Nav"),
+                            Button("Del"), 
+                        ]))
                     if "File" in args:
                         f = " ".join(args[3:])
                         VARIABLES["Files"].append(f)
+                        VARIABLES["Listings"].append(ListEntry(f, [
+                            Button("DL"),
+                            Button("Del"),
+                        ]))
                     if "Path" in args:
                         p = " ".join(args[3:])
                         VARIABLES["Path"] = p
@@ -513,7 +535,14 @@ def draw(surface, dt):
         for t in settingTexts:
             blitText(surface, t, (20, y * 40 + TotalHeight), textSize=30)
             y += 1
-
+            
+    if MENUS[MENU].name == "File Browser":
+        remoteSurface = pygame.Surface(((width - 40) / 2, height - TotalHeight - 40))
+        y = 0
+        for Listing in VARIABLES["Listings"]:
+            remoteSurface.blit(Listing.CreateSurf(), (0, y))
+            y += Listing.height + 5
+        surface.blit(remoteSurface, (10, 10 + TotalHeight))
     surface.blit(MenuBar, (0,0))
     surface.blit(ButtonBar, (0, MENUBARHEIGHT))
     return surface

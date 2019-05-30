@@ -1,3 +1,4 @@
 `RDP.SSAll
 `File.SS "monitor-{var["Monitor"]}.png" | Reply.Body
+`File.RM "monitor-{var["Monitor"]}.png" 
 `Reply.SendReply
