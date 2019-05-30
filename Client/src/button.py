@@ -10,6 +10,7 @@ class ListEntry(object):
         self.textSize = textSize
         self.name = name
         self.length = len(self.name) * (self.textSize / 2) + 20 + sum([b.length + 10 for b in self.buttons]) + 5 * len(self.buttons)
+        self.buttonHitboxes = []
         
     def CreateSurf(self):
         self.length = len(self.name) * (self.textSize / 2) + 20 + sum([b.length + 10 for b in self.buttons]) + 5 * len(self.buttons)
@@ -17,8 +18,10 @@ class ListEntry(object):
         surf.fill((180, 180, 180))
         blitText(surf, self.name, (5, self.height / 2 - self.textSize / 2))
         x = len(self.name) * (self.textSize / 2) + 20
+        self.buttonHitboxes = []
         for button in self.buttons:
-            surf.blit(button.CreateSurf(), (x, 0))
+            surf.blit(button.CreateSurf(), (x, 10))
+            self.buttonHitboxes.append((x, 10, x+button.length, 10+button.buttonHeight))
             x = x + button.length + 10
         return surf
         
@@ -62,3 +65,5 @@ class Button(object):
             self.function()
         self.clicked = False
     
+
+

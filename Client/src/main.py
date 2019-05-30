@@ -2,9 +2,12 @@ from time import time
 import sys
 import getpass
 import os
+from os.path import join
 
 import pygame
 from pygame.locals import *
+
+## TODO UpDir.ess and NavigateTo.ess are the same script, fix that shit
 
 from mouse import Mouse
 import Modules.ScriptLoader as SL
@@ -135,10 +138,13 @@ def keyHeld(key, unidcode, time):
     pass
 
 def mousePressed(x, y, button):
+    global VARIABLES
     if y > MENUBARHEIGHT + BBARHEIGHT:
-        # 4 up
-        # 5 down
-        pass
+        if x < width / 2:
+            if button == 4:
+                VARIABLES["RScroll"] = VARIABLES["RScroll"] + 2
+            if button == 5:
+                VARIABLES["RScroll"] = VARIABLES["RScroll"] - 2
 
 def mouseReleased(x, y, button):
     pass
@@ -187,18 +193,20 @@ def mouseClicked(x, y, button):
     global RCTIME
     if y < MENUBARHEIGHT:
         X = 0
-        for button in MENUS:
-            if x > X and x < button.length + X:
-                button.Click()
-                FUNCQ.append(button)
-            X = X + button.length + 10
+        if button == 1:
+            for button in MENUS:
+                if x > X and x < button.length + X:
+                    button.Click()
+                    FUNCQ.append(button)
+                X = X + button.length + 10
     if y > MENUBARHEIGHT and y < MENUBARHEIGHT + BBARHEIGHT:
         X = 0
-        for button in BUTTONS[MENU]:
-            if x > X and x < button.length + X:
-                button.Click()
-                FUNCQ.append(button)
-            X = X + button.length + 10
+        if button == 1:
+            for button in BUTTONS[MENU]:
+                if x > X and x < button.length + X:
+                    button.Click()
+                    FUNCQ.append(button)
+                X = X + button.length + 10
     if y > MENUBARHEIGHT + BBARHEIGHT:
         ay = y - MENUBARHEIGHT - BBARHEIGHT
         factor = SETTINGS["Monitor"] - 1
@@ -220,6 +228,18 @@ def mouseClicked(x, y, button):
                         RCSCRIPT.addLine(f"`RDP.Sleep {abs(time() - RCTIME)}")
                         RCTIME = time()
                     RCSCRIPT.addLine(f"`RDP.RightClickAt {(ax / width) * xS} {(ay / (height - MENUBARHEIGHT - BBARHEIGHT)) * yS}")
+        if MENUS[MENU].name == "File Browser":
+            ListItems = VARIABLES["Listings"]
+            Y = VARIABLES["RScroll"] * 5
+            for Listing in VARIABLES["Listings"]:
+                for i in range(len(Listing.buttonHitboxes)):
+                    hit = Listing.buttonHitboxes[i]
+                    but = Listing.buttons[i]
+                    if x - 10 > hit[0] and x - 10 < hit[2]:
+                        if y - Y - MENUBARHEIGHT - BBARHEIGHT > hit[1] + VARIABLES["RScroll"] + 10 and y - Y - MENUBARHEIGHT - BBARHEIGHT < hit[3] + VARIABLES["RScroll"] + 10:
+                            but.Click()
+                            FUNCQ.append(but)
+                Y += Listing.height + 5
 
 def mouseDragged(drag, button):
     pass
@@ -245,9 +265,54 @@ def mouseMoved(x,y,dx,dy, button):
             else:
                 button.NoHover()
             X = X + button.length + 10
+
+        
+            #(10, 10 + TotalHeight)
     else:
         for button in BUTTONS[MENU]:
             button.NoHover()
+    if y > MENUBARHEIGHT + BBARHEIGHT:
+        if MENUS[MENU].name == "File Browser":
+            ListItems = VARIABLES["Listings"]
+            Y = VARIABLES["RScroll"] * 5
+            for Listing in VARIABLES["Listings"]:
+                for i in range(len(Listing.buttonHitboxes)):
+                    hit = Listing.buttonHitboxes[i]
+                    but = Listing.buttons[i]
+                    but.NoHover()
+                    if x - 10 > hit[0] and x - 10 < hit[2]:
+                        if y - Y - MENUBARHEIGHT - BBARHEIGHT > hit[1] + VARIABLES["RScroll"] + 10 and y - Y - MENUBARHEIGHT - BBARHEIGHT < hit[3] + VARIABLES["RScroll"] + 10:
+                            but.Hover()
+                Y += Listing.height + 5
+
+
+def PullFile(fullpath):
+    print(f"Pulling {fullpath}")
+    global VARIABLES, MC, SC, server_address
+    pullfilescript = SC.getScript("PullFile")
+    pullfilescript.setVariables({"Path":fullpath})
+    MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", pullfilescript.Load())
+
+def generatePullFile(fullpath):
+    def temp():
+        return PullFile(fullpath)
+
+    return temp
+
+def NavTo(path):
+    print(f"Navigating To {path}")
+    global VARIABLES, MC, SC, server_address
+    navigationscript = SC.getScript("NavigateTo")
+    navigationscript.setVariables({"Path":path})
+    MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", navigationscript.Load())
+
+def generateNavTo(path):
+    def temp():
+        return NavTo(path)
+
+    return temp
+
+
 def nextMon():
     global SETTINGS
     m = SETTINGS["Monitor"]
@@ -410,6 +475,8 @@ def postInit():
         "Path":"",
         "Listings":[],
         "LocalPath":os.getcwd(),
+        "RScroll":0,
+        "LScroll":0,
     }
     for m in MC.getMail():
         if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
@@ -440,9 +507,10 @@ def udpateMail():
     global ScreenCaps
     global SETTINGS, VARIABLES
     print(f"Getting Mail {time()}")
-    first = False
+    
     for m in MC.getMail():
         if m.subject.split(":")[0].strip(" ") == "SERVICE OUTPUT" and m.subject.split(":")[1].strip(" ") == ID:
+            first = False
             for line in str(m.message).split("\n"):
                 if line[:2] == f"%%":
                     args = line.split(" ")
@@ -467,19 +535,21 @@ def udpateMail():
                             first = True
                             VARIABLES["Files"] = []
                             VARIABLES["Dirs"] = []
+                            VARIABLES["Listings"] = []
+                            print("Cleared Listings")
                     if "Dir" in args:
                         d = " ".join(args[3:])
                         VARIABLES["Dirs"].append(d)
                         VARIABLES["Listings"].append(ListEntry(d, [
-                            Button("Nav"),
-                            Button("Del"), 
+                            Button("Nav", height=30, function=generateNavTo(d)),
+                            Button("Del", height=30), 
                         ]))
                     if "File" in args:
                         f = " ".join(args[3:])
                         VARIABLES["Files"].append(f)
                         VARIABLES["Listings"].append(ListEntry(f, [
-                            Button("DL"),
-                            Button("Del"),
+                            Button("DL", height=30, function=generatePullFile(f)),
+                            Button("Del", height=30),
                         ]))
                     if "Path" in args:
                         p = " ".join(args[3:])
@@ -538,7 +608,8 @@ def draw(surface, dt):
             
     if MENUS[MENU].name == "File Browser":
         remoteSurface = pygame.Surface(((width - 40) / 2, height - TotalHeight - 40))
-        y = 0
+        remoteSurface.fill((240, 240, 240))
+        y = VARIABLES["RScroll"] * 5
         for Listing in VARIABLES["Listings"]:
             remoteSurface.blit(Listing.CreateSurf(), (0, y))
             y += Listing.height + 5

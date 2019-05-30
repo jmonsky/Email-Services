@@ -22,6 +22,9 @@ c.login(config["USERNAME"], config["PASSWORD"], config["SMTP_ADDRESS"], config["
 print("Logged In")
 AllowedModules = [x.strip(" ") for x in config["ALLOWED_MODULES"].split(",")]
 run = True
+for m in c.getMail():
+    if m.subject.split(":")[0].strip(" ") == "SERVICE INPUT" and m.subject.split(":")[1].strip(" ") == ID:
+        c.delMail(m)
 while run:
     for m in c.getMail():
         if m.subject.split(":")[0].strip(" ") == "SERVICE INPUT" and m.subject.split(":")[1].strip(" ") == ID:
