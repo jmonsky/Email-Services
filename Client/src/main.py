@@ -12,7 +12,7 @@ from pygame.locals import *
 from mouse import Mouse
 import Modules.ScriptLoader as SL
 from mailController import MailController
-from Modules.File import StandardDeSerialize, StandardSerialize, GetFiles, GetDirectories
+from Modules.File import StandardDeSerialize, StandardSerialize, GetFiles, GetDirectories, Serialize
 from Modules.screencap import ScreenCap
 from button import Button, ListEntry
 
@@ -506,6 +506,9 @@ def postInit():
     xS = 1920  
     yS = 1080
 
+def UpdateFile(f):
+    MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", f"`File.DeSerialize '{f}' '{Serialize(None, f)}'")
+
 def run(dt, runs):
     global ScreenCaps, FUNCQ, MC, SC, VARIABLES
     ScreenCaps = [x.update() for x in ScreenCaps]
@@ -531,7 +534,7 @@ def run(dt, runs):
             VARIABLES["LocalListings"].append(
                 ListEntry(f, 
                 [
-                    Button("UL", height=30),
+                    Button("UL", height=30, function=lambda fi=f : UpdateFile(fi)),
                     Button("Del", height=30)
                 ]
                 )
@@ -541,7 +544,7 @@ def run(dt, runs):
             VARIABLES["LocalListings"].append(
                 ListEntry(d,
                 [
-                    Button("Nav", height=30, function=lambda : os.chdir(d)),
+                    Button("Nav", height=30, function=lambda di=d : os.chdir(di)),
                     Button("Del", height=30)
                 ]
                 )

@@ -23,6 +23,7 @@ print("Logged In")
 AllowedModules = [x.strip(" ") for x in config["ALLOWED_MODULES"].split(",")]
 run = True
 for m in c.getMail():
+    break
     if m.subject.split(":")[0].strip(" ") == "SERVICE INPUT" and m.subject.split(":")[1].strip(" ") == ID:
         c.delMail(m)
 while run:
