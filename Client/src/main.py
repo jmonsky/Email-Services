@@ -2,7 +2,7 @@ from time import time
 import sys
 import getpass
 import os
-from os.path import join
+from os.path import join, isfile
 
 import pygame
 from pygame.locals import *
@@ -240,6 +240,17 @@ def mouseClicked(x, y, button):
                             but.Click()
                             FUNCQ.append(but)
                 Y += Listing.height + 5
+            Y = VARIABLES["LScroll"] * 5
+            for Listing in VARIABLES["LocalListings"]:
+                for i in range(len(Listing.buttonHitboxes)):
+                    hit = Listing.buttonHitboxes[i]
+                    but = Listing.buttons[i]
+                    but.NoHover()
+                    if  x > hit[0] + (20 + (width - 40) / 2)  and x <  hit[2] + (20 + (width - 40) / 2):
+                        if y - Y - MENUBARHEIGHT - BBARHEIGHT > hit[1] + VARIABLES["LScroll"] + 10 and y - Y - MENUBARHEIGHT - BBARHEIGHT < hit[3] + VARIABLES["RScroll"] + 10:
+                            but.Click()
+                            FUNCQ.append(but)
+                Y += Listing.height + 5
 
 def mouseDragged(drag, button):
     pass
@@ -282,6 +293,16 @@ def mouseMoved(x,y,dx,dy, button):
                     but.NoHover()
                     if x - 10 > hit[0] and x - 10 < hit[2]:
                         if y - Y - MENUBARHEIGHT - BBARHEIGHT > hit[1] + VARIABLES["RScroll"] + 10 and y - Y - MENUBARHEIGHT - BBARHEIGHT < hit[3] + VARIABLES["RScroll"] + 10:
+                            but.Hover()
+                Y += Listing.height + 5
+            Y = VARIABLES["LScroll"] * 5
+            for Listing in VARIABLES["LocalListings"]:
+                for i in range(len(Listing.buttonHitboxes)):
+                    hit = Listing.buttonHitboxes[i]
+                    but = Listing.buttons[i]
+                    but.NoHover()
+                    if  x > hit[0] + (20 + (width - 40) / 2)  and x <  hit[2] + (20 + (width - 40) / 2):
+                        if y - Y - MENUBARHEIGHT - BBARHEIGHT > hit[1] + VARIABLES["LScroll"] + 10 and y - Y - MENUBARHEIGHT - BBARHEIGHT < hit[3] + VARIABLES["RScroll"] + 10:
                             but.Hover()
                 Y += Listing.height + 5
 
@@ -354,14 +375,7 @@ def upDirectory():
     MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updirscript.Load())
 
 def upDirectoryLocal():
-    global MC, SC, server_address, VARIABLES
-    pathargs = VARIABLES["LocalPath"].split("/") 
-    
-    newdir = "/".join(pathargs[:-1])
-    if len(pathargs) == 1:
-        pathargs = VARIABLES["LocalPath"].split("\\")
-        newdir = "\\".join(pathargs[:-1])
-    VARIABLES["LocalPath"] = newdir
+    os.chdir(".\\..")
 
 def CycleUpdateTimes():
     global SETTINGS
@@ -474,6 +488,10 @@ def postInit():
         "Dirs":[],
         "Path":"",
         "Listings":[],
+        "LocalListings":[],
+        "LocalPath":[],
+        "LocalDirs":[],
+        "LocalFiles":[],
         "LocalPath":os.getcwd(),
         "RScroll":0,
         "LScroll":0,
@@ -489,7 +507,7 @@ def postInit():
     yS = 1080
 
 def run(dt, runs):
-    global ScreenCaps, FUNCQ, MC, SC
+    global ScreenCaps, FUNCQ, MC, SC, VARIABLES
     ScreenCaps = [x.update() for x in ScreenCaps]
     for item in FUNCQ:
         if type(item) == Button:
@@ -500,7 +518,34 @@ def run(dt, runs):
         updateScript.setVariables({})
         MC.sendMail(server_address, f"SERVICE INPUT : {SID} : {ID}", updateScript.Load())
         udpateMail()
-        print(VARIABLES["Path"])
+    if MENUS[MENU].name == "File Browser":
+        VARIABLES["LocalDirs"] = []
+        VARIABLES["LocalFiles"] = []
+        VARIABLES["LocalPath"] = os.getcwd()
+        VARIABLES["LocalListings"] = []
+        directory = [f for f in os.listdir(os.getcwd())]
+        files = [f for f in directory if isfile(join(os.getcwd(), f))]
+        dirs = [d for d in directory if not isfile(join(os.getcwd(), d))]
+        for f in files:
+            VARIABLES["LocalFiles"].append(f)
+            VARIABLES["LocalListings"].append(
+                ListEntry(f, 
+                [
+                    Button("UL", height=30),
+                    Button("Del", height=30)
+                ]
+                )
+            )
+        for d in dirs:
+            VARIABLES["LocalDirs"].append(d)
+            VARIABLES["LocalListings"].append(
+                ListEntry(d,
+                [
+                    Button("Nav", height=30, function=lambda : os.chdir(d)),
+                    Button("Del", height=30)
+                ]
+                )
+            )
 
 def udpateMail():
     global xS, yS
@@ -614,6 +659,14 @@ def draw(surface, dt):
             remoteSurface.blit(Listing.CreateSurf(), (0, y))
             y += Listing.height + 5
         surface.blit(remoteSurface, (10, 10 + TotalHeight))
+        localSurface = pygame.Surface(((width - 40) / 2, height - TotalHeight - 40))
+        localSurface.fill((240, 240, 240))
+        y = VARIABLES["LScroll"] * 5
+        for Listing in VARIABLES["LocalListings"]:
+            localSurface.blit(Listing.CreateSurf(), (0, y))
+            y += Listing.height + 5
+        surface.blit(localSurface, (20 + (width - 40) / 2, 10 + TotalHeight))
+
     surface.blit(MenuBar, (0,0))
     surface.blit(ButtonBar, (0, MENUBARHEIGHT))
     return surface
